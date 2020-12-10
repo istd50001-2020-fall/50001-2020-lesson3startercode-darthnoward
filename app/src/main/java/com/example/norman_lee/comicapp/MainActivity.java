@@ -44,8 +44,24 @@ public class MainActivity extends AppCompatActivity {
         //TODO 6.0 Study the Utils class and see what methods are available for you
         //TODO 6.1 Ensure that Android Manifest has permissions for internet and has orientation fixed
         //TODO 6.2 Get references to widgets
+        editTextComicNo = findViewById(R.id.editTextComicNo);
+        buttonGetComic = findViewById(R.id.buttonGetComic);
+        textViewTitle = findViewById(R.id.textViewTitle);
+        imageViewComic = findViewById(R.id.imageViewComic);
         //TODO 6.3 Set up setOnClickListener for the button
+
+        buttonGetComic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (Utils.isNetworkAvailable(MainActivity.this)){
+                    comicNo = editTextComicNo.getText().toString();
+                    GetComic getComic = new GetComic();
+                    getComic.execute(comicNo);
+                }
+            }
+        });
         //TODO 6.4 Retrieve the user input from the EditText
+
         //TODO 6.5 - 6.9 Modify GetComic below
         //TODO 6.10 If network is active, instantiate GetComic and call the execute method
 
@@ -58,9 +74,38 @@ public class MainActivity extends AppCompatActivity {
     //TODO 6.7 (onProgressUpdate, doInBackground) Call publishProgress, write code to update textViewTitle with the image URL
     //TODO 6.8 (doInBackground)Call Utils.getBitmap using the URL to get the bitmap
     //TODO 6.9 (onPostExecute)Assign the Bitmap downloaded to imageView. The bitmap may be null.
-    class GetComic {
+    class GetComic extends AsyncTask<String, String, Bitmap> {
 
 
+        @Override
+        protected Bitmap doInBackground(String... strings) {
+            Bitmap output = null;
+            try {
+                String url = Utils.getImageURLFromXkcdApi(strings[0]);
+                publishProgress(url);
+                URL url1 = new URL(url);
+                output = Utils.getBitmap(url1);
+            } catch (IOException e) {
+                publishProgress(ERROR_HTTPS_ERROR);
+                e.printStackTrace();
+            } catch (JSONException e) {
+                publishProgress(ERROR_BAD_JSON);
+                e.printStackTrace();
+            }
+            return output;
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+            super.onProgressUpdate(values);
+            String message = values[0];
+            textViewTitle.setText(message);
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            super.onPostExecute(bitmap);
+            imageViewComic.setImageBitmap(bitmap);
+        }
     }
-
 }
